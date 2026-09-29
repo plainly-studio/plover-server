@@ -8,21 +8,41 @@ If you haven't already: **System → Plugins**, install **openmediavault-compose
 
 ## 2. Create a data folder
 
-The server keeps its database and TLS certificate here. For example, on your data drive:
+The server keeps its database and TLS certificate in a folder on your data drive. Create it yourself, **before** the container first starts: otherwise Docker creates it owned by root, and the server can't write to it.
 
-```
-/srv/dev-disk-by-uuid-XXXX/appdata/plover
-```
-
-It must be writable by the user the container runs as. The default in `compose.yaml` is `1000:100`, which is OMV's first user and the `users` group. Check yours with `id <your user>` over SSH, and fix ownership if needed:
+Over SSH, list your data drives:
 
 ```sh
-sudo chown 1000:100 /srv/dev-disk-by-uuid-XXXX/appdata/plover
+ls -d /srv/dev-disk-by-*
 ```
+
+Pick the one to use, and put it in the first line below in place of `/srv/dev-disk-by-uuid-XXXX`. Then paste all three lines:
+
+```sh
+DATA=/srv/dev-disk-by-uuid-XXXX/appdata/plover
+sudo mkdir -p "$DATA" && sudo chown -R 1000:100 "$DATA"
+echo "$DATA"
+```
+
+The last line prints the folder's full path. **Copy it**: it goes into the compose file in step 3.
+
+`1000:100` is the user the container runs as: OMV's first user and the `users` group. If `id <your user>` shows other numbers, use yours in the `chown`, and change the `user:` line in the compose file to match.
 
 ## 3. Add the service
 
-**Services → Compose → Files → Add**, name it `plover`, and paste [`compose.yaml`](../compose.yaml) from this repository. Replace `CHANGE_TO_YOUR_DATA_FOLDER/plover` with your data folder from step 2. Save, then press **Up**.
+**Services → Compose → Files → Add**, name it `plover`, and paste [`compose.yaml`](../compose.yaml) from this repository. Find this line:
+
+```yaml
+      - CHANGE_TO_YOUR_DATA_FOLDER:/data
+```
+
+and replace `CHANGE_TO_YOUR_DATA_FOLDER`, and only that, with the path you copied in step 2. Keep `:/data` on the end. It should look like this, with your drive's name:
+
+```yaml
+      - /srv/dev-disk-by-uuid-1234abcd/appdata/plover:/data
+```
+
+Save, then press **Up**.
 
 > **The image** is `ghcr.io/plainly-studio/plover-server`, built by this repository's CI for `linux/amd64` and `linux/arm64`: `latest` from `main`, and a tag for each release.
 >
@@ -85,4 +105,4 @@ Once all your devices are paired, stop new pairings: add `PLOVER_PAIRING_ENABLED
 
 - **"Can't reach the server"**: phone not on the home Wi-Fi, wrong IP or port, or the container isn't running. From a computer on the LAN, `curl -k https://<nas-ip>:8443/v1/info` should answer with JSON.
 - **"The server's certificate changed"**: the data folder was wiped or the certificate was regenerated. Disconnect in the app and pair again, comparing the new fingerprint.
-- **Container restarts with "permission denied"**: the data folder isn't writable by `PUID:PGID`; see step 2.
+- **The log says "Plover can't write to its data folder"** (and the container keeps restarting): the folder belongs to another user, often root because Docker created it. Run the `chown` from step 2 on your data folder, then **Compose → Files → plover → Up**. The message names the user the server runs as.

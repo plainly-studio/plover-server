@@ -4,17 +4,32 @@ For any computer with Docker that stays on at home: a NAS, a home server or a sp
 
 ## 1. A data folder
 
-The server keeps its database and TLS certificate here:
+The server keeps its database and TLS certificate here. Create it yourself, **before** the container first starts: otherwise Docker creates it owned by root, and the server can't write to it.
 
 ```sh
 mkdir -p ~/plover-data
+realpath ~/plover-data
 ```
 
-It must be writable by the user the container runs as. `compose.yaml` runs it as `1000:100`; check yours with `id`, and set `PUID` and `PGID` if they differ.
+The second line prints the folder's full path (e.g. `/home/you/plover-data`). **Copy it** for step 2.
+
+The folder must be writable by the user the container runs as. `compose.yaml` runs it as `1000:100`; check yours with `id`, and set `PUID` and `PGID` if they differ.
 
 ## 2. Start it
 
-Copy [`compose.yaml`](../compose.yaml) next to the folder, replace `CHANGE_TO_YOUR_DATA_FOLDER/plover` with the folder's full path, then:
+Copy [`compose.yaml`](../compose.yaml) next to the folder. Find this line:
+
+```yaml
+      - CHANGE_TO_YOUR_DATA_FOLDER:/data
+```
+
+and replace `CHANGE_TO_YOUR_DATA_FOLDER`, and only that, with the path from step 1, keeping `:/data` on the end:
+
+```yaml
+      - /home/you/plover-data:/data
+```
+
+Then:
 
 ```sh
 docker compose up -d
@@ -49,3 +64,7 @@ On your other devices, repeat steps 1–3 and unlock the vault with the same pas
 - **Update:** `docker compose pull && docker compose up -d`.
 - **Back up** the data folder. It's already encrypted.
 - **More** (restoring, a new pairing code, a forgotten passphrase, a new certificate): see the maintenance table in [omv-setup.md](omv-setup.md#maintenance); the `docker exec` commands are the same.
+
+## Troubleshooting
+
+- **The log says "Plover can't write to its data folder"** (and the container keeps restarting): the folder belongs to another user, often root because Docker created it. Give it to the user the message names, e.g. `sudo chown -R 1000:100 ~/plover-data`, then `docker compose up -d`.

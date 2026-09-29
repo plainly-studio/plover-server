@@ -10,8 +10,9 @@ services:
     ports:
       - "8443:8443"
     volumes:
-      # Change the left side to a folder on your data drive, e.g. /srv/appdata/plover
-      - CHANGE_TO_YOUR_DATA_FOLDER/plover:/data
+      # Replace all of CHANGE_TO_YOUR_DATA_FOLDER with your data folder's full path, and keep ":/data"
+      # after it, e.g. - /srv/dev-disk-by-uuid-1234abcd/appdata/plover:/data
+      - CHANGE_TO_YOUR_DATA_FOLDER:/data
     environment:
       TZ: "${TZ:-Etc/UTC}"
       # Optional: extra names for the certificate, e.g. "nas.local"

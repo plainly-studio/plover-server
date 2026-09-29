@@ -10,12 +10,26 @@ import io.ktor.server.engine.sslConnector
 import io.ktor.server.netty.Netty
 import io.ktor.server.netty.NettyApplicationEngine
 import org.slf4j.LoggerFactory
+import java.nio.file.AccessDeniedException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.system.exitProcess
 
 private val log = LoggerFactory.getLogger("plover")
 
 fun main(args: Array<String>) {
     val config = ServerConfig.fromEnvironment()
+    try {
+        command(args, config)
+    } catch (e: AccessDeniedException) {
+        // The usual first-run problem: the data folder belongs to someone other than the container's user.
+        System.err.println(permissionHelp(e.file, config.dataDir, processIds(), ownerOf(config.dataDir)))
+        exitProcess(1)
+    }
+}
+
+private fun command(args: Array<String>, config: ServerConfig) {
     when (args.firstOrNull()) {
         null, "serve" -> serve(config)
         "show-pairing" -> {
@@ -42,6 +56,33 @@ fun main(args: Array<String>) {
         }
     }
 }
+
+/** What to do when the data folder can't be written, instead of a stack trace. */
+fun permissionHelp(file: String?, dataDir: Path, process: Pair<Int, Int>?, owner: Int?): String = buildString {
+    appendLine()
+    appendLine("  Plover can't write to its data folder (${file ?: dataDir}: permission denied).")
+    appendLine()
+    val runsAs = process?.let { (uid, gid) -> "user $uid, group $gid" }
+    if (runsAs != null) {
+        append("  The server runs as $runsAs")
+        appendLine(if (owner != null) ", but the folder belongs to user $owner${if (owner == 0) " (root)" else ""}." else ".")
+    }
+    appendLine("  On the NAS, give the folder to that user, then restart the container:")
+    appendLine()
+    appendLine("    sudo chown -R ${process?.let { (uid, gid) -> "$uid:$gid" } ?: "<user>:<group>"} <your data folder>")
+    appendLine()
+    appendLine("  Your data folder is the left side of the volumes: line in compose.yaml.")
+    appendLine("  To run as a different user, set PUID and PGID instead.")
+}
+
+/** The process's user and group ids, from /proc (Linux, as in the container); null elsewhere. */
+private fun processIds(): Pair<Int, Int>? = runCatching {
+    val status = Files.readAllLines(Paths.get("/proc/self/status"))
+    fun id(name: String) = status.first { it.startsWith("$name:") }.split(Regex("\\s+"))[1].toInt()
+    id("Uid") to id("Gid")
+}.getOrNull()
+
+private fun ownerOf(dir: Path): Int? = runCatching { Files.getAttribute(dir, "unix:uid") as Int }.getOrNull()
 
 fun serve(config: ServerConfig) {
     val tls = TlsIdentity.loadOrCreate(config.dataDir, config.hostnames)
