@@ -2,34 +2,27 @@
 
 For any computer with Docker that stays on at home: a NAS, a home server or a spare PC. For OpenMediaVault's web interface, see [omv-setup.md](omv-setup.md) instead.
 
-## 1. A data folder
+## 1. A folder for Plover
 
-The server keeps its database and TLS certificate here. Create it yourself, **before** the container first starts: otherwise Docker creates it owned by root, and the server can't write to it.
+Paste these lines into a terminal. They make a `plover` folder in your home folder, with the data folder inside it, and download `compose.yaml` into it:
 
 ```sh
-mkdir -p ~/plover-data
-realpath ~/plover-data
+mkdir -p ~/plover/data
+cd ~/plover
+curl -fsSLO https://raw.githubusercontent.com/plainly-studio/plover-server/main/compose.yaml
+sed -i 's|- CHANGE_TO_YOUR_DATA_FOLDER:/data|- ./data:/data|' compose.yaml
+printf 'PUID=%s\nPGID=%s\n' "$(id -u)" "$(id -g)" > .env
 ```
 
-The second line prints the folder's full path (e.g. `/home/you/plover-data`). **Copy it** for step 2.
-
-The folder must be writable by the user the container runs as. `compose.yaml` runs it as `1000:100`; check yours with `id`, and set `PUID` and `PGID` if they differ.
+What they do:
+- **`mkdir`** creates the data folder, where the server keeps its database and TLS certificate. It has to exist **before** the container first starts: otherwise Docker creates it owned by root, and the server can't write to it.
+- **`curl`** downloads [`compose.yaml`](../compose.yaml). No `curl`? Install it (`sudo apt install curl` on Ubuntu or Debian), or run `nano compose.yaml`, paste the file's contents from GitHub, and save with Ctrl+O, Enter, Ctrl+X.
+- **`sed`** points `compose.yaml` at the data folder: its `volumes:` line becomes `- ./data:/data`.
+- **`printf`** writes a `.env` file, so the container runs as you and can write to the folder.
 
 ## 2. Start it
 
-Copy [`compose.yaml`](../compose.yaml) next to the folder. Find this line:
-
-```yaml
-      - CHANGE_TO_YOUR_DATA_FOLDER:/data
-```
-
-and replace `CHANGE_TO_YOUR_DATA_FOLDER`, and only that, with the path from step 1, keeping `:/data` on the end:
-
-```yaml
-      - /home/you/plover-data:/data
-```
-
-Then:
+From the `plover` folder:
 
 ```sh
 docker compose up -d
@@ -60,11 +53,13 @@ On your other devices, repeat steps 1–3 and unlock the vault with the same pas
 
 ## Afterwards
 
+Run the `docker compose` commands from the `plover` folder (`cd ~/plover`).
+
 - **Stop new pairings** once every device is paired: set `PLOVER_PAIRING_ENABLED: "false"` in `compose.yaml` and run `docker compose up -d` again.
 - **Update:** `docker compose pull && docker compose up -d`.
-- **Back up** the data folder. It's already encrypted.
+- **Back up** `~/plover/data`. It's already encrypted.
 - **More** (restoring, a new pairing code, a forgotten passphrase, a new certificate): see the maintenance table in [omv-setup.md](omv-setup.md#maintenance); the `docker exec` commands are the same.
 
 ## Troubleshooting
 
-- **The log says "Plover can't write to its data folder"** (and the container keeps restarting): the folder belongs to another user, often root because Docker created it. Give it to the user the message names, e.g. `sudo chown -R 1000:100 ~/plover-data`, then `docker compose up -d`.
+- **The log says "Plover can't write to its data folder"** (and the container keeps restarting): the folder belongs to another user, often root because Docker created it. Give it to yourself with `sudo chown -R "$(id -u):$(id -g)" ~/plover/data`, then `docker compose up -d`.
