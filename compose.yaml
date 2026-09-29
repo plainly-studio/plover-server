@@ -2,7 +2,7 @@
 # or a computer that stays on at home. Guides are in docs/.
 services:
   subtrack:
-    image: ghcr.io/plainly-studio/subtrack-server:latest
+    image: ghcr.io/plainly-studio/subtrack-sync-server:latest
     container_name: subtrack
     restart: unless-stopped
     # The user the container runs as, so files in the data folder belong to you. Find yours with `id`.

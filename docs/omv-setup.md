@@ -24,7 +24,7 @@ sudo chown 1000:100 /srv/dev-disk-by-uuid-XXXX/appdata/subtrack
 
 **Services → Compose → Files → Add**, name it `subtrack`, and paste [`compose.yaml`](../compose.yaml) from this repository. Replace `CHANGE_TO_YOUR_DATA_FOLDER/subtrack` with your data folder from step 2. Save, then press **Up**.
 
-> **The image** is `ghcr.io/plainly-studio/subtrack-server`, built by this repository's CI for `linux/amd64` and `linux/arm64`: `latest` from `main`, and a tag for each release.
+> **The image** is `ghcr.io/plainly-studio/subtrack-sync-server`, built by this repository's CI for `linux/amd64` and `linux/arm64`: `latest` from `main`, and a tag for each release.
 >
 > **Building it yourself** instead: replace the `image:` line with `build: .` in a clone of this repository.
 
