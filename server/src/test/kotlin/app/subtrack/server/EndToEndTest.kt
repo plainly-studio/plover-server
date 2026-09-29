@@ -29,7 +29,7 @@ import kotlin.test.assertTrue
 
 /** Runs the real server over real TLS and syncs two simulated devices through it. */
 class EndToEndTest {
-    private val dataDir: Path = Files.createTempDirectory("subtrack-e2e")
+    private val dataDir: Path = Files.createTempDirectory("plover-e2e")
     private val port = ServerSocket(0).use { it.localPort }
     private var running: Running? = null
     private val passphrase = "correct horse battery staple".toCharArray()
@@ -38,7 +38,7 @@ class EndToEndTest {
 
     private fun start(): Running {
         val tls = TlsIdentity.loadOrCreate(dataDir, emptyList())
-        val store = SyncStore(dataDir.resolve("subtrack.db"))
+        val store = SyncStore(ServerConfig.database(dataDir))
         val server = createServer(port, tls, store, Pairing("PAIR-CODE-2345", enabled = true), host = "127.0.0.1")
         server.start(wait = false)
         return Running(tls, store) { server.stop(0, 1_000); store.close() }.also { running = it }
@@ -137,7 +137,7 @@ class EndToEndTest {
 
     @Test
     fun `devices recover after the server's data folder is restored from an old backup`() = runBlocking<Unit> {
-        val backupDir = Files.createTempDirectory("subtrack-backup")
+        val backupDir = Files.createTempDirectory("plover-backup")
         var server = start()
         val fingerprint = server.tls.fingerprint
         val apiA = OkHttpSyncApi(url, fingerprint, OkHttpSyncApi(url, fingerprint, null).register("PAIR-CODE-2345", "A").token)
@@ -193,7 +193,7 @@ class EndToEndTest {
     @Test
     fun `generated secrets are private to the server user`() {
         start()
-        for (name in listOf("tls.p12", "tls.pass", "subtrack.db")) {
+        for (name in listOf("tls.p12", "tls.pass", "plover.db")) {
             val perms = Files.getPosixFilePermissions(dataDir.resolve(name)).map { it.name }
             assertTrue(perms.none { it.startsWith("GROUP") || it.startsWith("OTHERS") }, "$name is $perms")
         }

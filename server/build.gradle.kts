@@ -19,7 +19,7 @@ java {
 
 application {
     mainClass.set("app.subtrack.server.MainKt")
-    applicationName = "subtrack-server"
+    applicationName = "plover-server"
 }
 
 tasks.jar {

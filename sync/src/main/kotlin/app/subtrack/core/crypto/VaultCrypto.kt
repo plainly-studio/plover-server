@@ -96,6 +96,7 @@ object VaultCrypto {
     private const val NONCE_BYTES = 12
     private const val TAG_BITS = 128
     private const val SALT_BYTES = 16
+    // Part of the encryption format: they keep the name from before the rename, or existing vaults wouldn't open.
     private const val WRAP_AAD_PREFIX = "subtrack/vault-key/v1"
     private const val WRAPPED_KEY_BYTES = NONCE_BYTES + VaultKey.KEY_BYTES + TAG_BITS / 8
     private const val RECORD_AAD_PREFIX = "subtrack/record/v1/"

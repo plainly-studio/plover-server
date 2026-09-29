@@ -22,6 +22,7 @@ class TlsIdentity private constructor(val keyStore: KeyStore, val password: Char
     val fingerprint: CertFingerprint get() = CertFingerprint.of(certificate)
 
     companion object {
+        /** The key's name inside tls.p12. It keeps the name from before the rename, so existing certificates still load. */
         const val ALIAS = "subtrack"
 
         fun loadOrCreate(dataDir: Path, hostnames: List<String>): TlsIdentity {
@@ -37,7 +38,7 @@ class TlsIdentity private constructor(val keyStore: KeyStore, val password: Char
             val generated = buildKeyStore {
                 certificate(ALIAS) {
                     this.password = password
-                    subject = X500Principal("CN=Subtrack sync server, O=Subtrack")
+                    subject = X500Principal("CN=Plover sync server, O=Plainly Studio")
                     domains = (listOf("localhost") + hostnames).distinct()
                     daysValid = 365L * 30 // Pinned, not CA-validated: expiry would only force a re-pair.
                     keySizeInBits = 3072

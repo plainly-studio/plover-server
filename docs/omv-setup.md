@@ -11,20 +11,20 @@ If you haven't already: **System → Plugins**, install **openmediavault-compose
 The server keeps its database and TLS certificate here. For example, on your data drive:
 
 ```
-/srv/dev-disk-by-uuid-XXXX/appdata/subtrack
+/srv/dev-disk-by-uuid-XXXX/appdata/plover
 ```
 
 It must be writable by the user the container runs as. The default in `compose.yaml` is `1000:100`, which is OMV's first user and the `users` group. Check yours with `id <your user>` over SSH, and fix ownership if needed:
 
 ```sh
-sudo chown 1000:100 /srv/dev-disk-by-uuid-XXXX/appdata/subtrack
+sudo chown 1000:100 /srv/dev-disk-by-uuid-XXXX/appdata/plover
 ```
 
 ## 3. Add the service
 
-**Services → Compose → Files → Add**, name it `subtrack`, and paste [`compose.yaml`](../compose.yaml) from this repository. Replace `CHANGE_TO_YOUR_DATA_FOLDER/subtrack` with your data folder from step 2. Save, then press **Up**.
+**Services → Compose → Files → Add**, name it `plover`, and paste [`compose.yaml`](../compose.yaml) from this repository. Replace `CHANGE_TO_YOUR_DATA_FOLDER/plover` with your data folder from step 2. Save, then press **Up**.
 
-> **The image** is `ghcr.io/plainly-studio/subtrack-sync-server`, built by this repository's CI for `linux/amd64` and `linux/arm64`: `latest` from `main`, and a tag for each release.
+> **The image** is `ghcr.io/plainly-studio/plover-server`, built by this repository's CI for `linux/amd64` and `linux/arm64`: `latest` from `main`, and a tag for each release.
 >
 > **Building it yourself** instead: replace the `image:` line with `build: .` in a clone of this repository.
 
@@ -32,10 +32,10 @@ Port **8443** must be free. If it isn't, change the left side of `"8443:8443"`, 
 
 ## 4. Read the log
 
-**Services → Compose → Containers → subtrack → Logs**. You'll see:
+**Services → Compose → Containers → plover → Logs**. You'll see:
 
 ```
-  Subtrack sync server 1.0.0 on port 8443 (HTTPS)
+  Plover sync server 1.0.0 on port 8443 (HTTPS)
 
   In the app, enter:   https://<your NAS IP address>:8443
   Pairing code:        Y9UZ-8TVS-F4VF
@@ -66,19 +66,19 @@ Sync runs by itself about once an hour on Wi-Fi, shortly after every change, and
 
 ## Hardening (optional)
 
-Once all your devices are paired, stop new pairings: add `SUBTRACK_PAIRING_ENABLED: "false"` under `environment:` and redeploy. Lost a phone? Remove it under **Settings → Cloud backup → Back up to your NAS → Devices** on any other device.
+Once all your devices are paired, stop new pairings: add `PLOVER_PAIRING_ENABLED: "false"` under `environment:` and redeploy. Lost a phone? Remove it under **Settings → Cloud backup → Back up to your NAS → Devices** on any other device.
 
 ## Maintenance
 
 | Task | How |
 |---|---|
-| Update | Compose → Files → subtrack → **Pull**, then **Up**. |
+| Update | Compose → Files → plover → **Pull**, then **Up**. |
 | Health | The container reports *healthy* once HTTPS answers (Compose → Containers shows it). |
 | Back up | Back up the data folder (it's already encrypted), or use **Settings → Export backup** in the app. |
-| Restore the data folder | Compose → Containers → subtrack → **Stop**; replace the data folder's contents with the backup; **Up**. Nothing else is needed: at its next sync each phone notices the server is missing changes it had seen, and uploads what the backup lacks (the log says so once per phone). Keep the backup's `tls.p12`/`tls.pass`, or phones must pair again. |
-| Pairing details again | `docker exec subtrack /opt/subtrack/bin/subtrack-server show-pairing` prints the pairing code and fingerprint. |
-| New pairing code | `docker exec subtrack /opt/subtrack/bin/subtrack-server rotate-pairing-code`, then restart. |
-| Forgot the passphrase | `docker exec subtrack /opt/subtrack/bin/subtrack-server reset-vault --yes`. This deletes the synced data (each phone keeps its own copy); then disconnect and set up sync again from one phone. |
+| Restore the data folder | Compose → Containers → plover → **Stop**; replace the data folder's contents with the backup; **Up**. Nothing else is needed: at its next sync each phone notices the server is missing changes it had seen, and uploads what the backup lacks (the log says so once per phone). Keep the backup's `tls.p12`/`tls.pass`, or phones must pair again. |
+| Pairing details again | `docker exec plover /opt/plover/bin/plover-server show-pairing` prints the pairing code and fingerprint. |
+| New pairing code | `docker exec plover /opt/plover/bin/plover-server rotate-pairing-code`, then restart. |
+| Forgot the passphrase | `docker exec plover /opt/plover/bin/plover-server reset-vault --yes`. This deletes the synced data (each phone keeps its own copy); then disconnect and set up sync again from one phone. |
 | New certificate | Delete `tls.p12` and `tls.pass` from the data folder and restart; every device must disconnect and pair again. |
 
 ## Troubleshooting

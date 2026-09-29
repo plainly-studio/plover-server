@@ -33,13 +33,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ServerApiTest {
-    private val dir = Files.createTempDirectory("subtrack-test")
+    private val dir = Files.createTempDirectory("plover-test")
     private val store = SyncStore(dir.resolve("db.sqlite"))
     private val pairing = Pairing("ABCD-EFGH-JKMN", enabled = true)
     private val header = app.subtrack.core.crypto.VaultCrypto.createVault("a long passphrase".toCharArray(), "v1", 0, KdfParams.TEST).first
 
     private fun test(block: suspend ApplicationTestBuilder.() -> Unit) = testApplication {
-        application { subtrackModule(store, pairing) }
+        application { ploverModule(store, pairing) }
         block()
     }
 
@@ -188,7 +188,7 @@ class ServerApiTest {
 
     @Test
     fun `pairing can be disabled`() = testApplication {
-        application { subtrackModule(store, Pairing("ABCD-EFGH-JKMN", enabled = false)) }
+        application { ploverModule(store, Pairing("ABCD-EFGH-JKMN", enabled = false)) }
         val response = client.register()
         assertEquals(HttpStatusCode.Forbidden, response.status)
         assertEquals("pairing_disabled", response.decode<ErrorResponse>().error)
@@ -197,7 +197,7 @@ class ServerApiTest {
     @Test
     fun `a vault can't grow past its storage quota`() = testApplication {
         val small = SyncStore(dir.resolve("small.sqlite"), SyncStore.Quota(maxRecords = 2, maxBytes = 10))
-        application { subtrackModule(small, pairing) }
+        application { ploverModule(small, pairing) }
         val token = client.register().decode<RegisterResponse>().token
         fun push(vararg r: PushRecord) = Protocol.json.encodeToString(PushRequest.serializer(), PushRequest(r.toList()))
 

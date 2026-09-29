@@ -71,7 +71,7 @@ suspend fun <T> ApplicationCall.receiveBounded(serializer: KSerializer<T>, limit
     }
 }
 
-fun Application.subtrackModule(store: SyncStore, pairing: Pairing, clock: () -> Long = System::currentTimeMillis) {
+fun Application.ploverModule(store: SyncStore, pairing: Pairing, clock: () -> Long = System::currentTimeMillis) {
     install(ContentNegotiation) { json(Protocol.json) }
     install(CallLogging) {
         level = Level.INFO

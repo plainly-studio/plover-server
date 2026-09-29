@@ -15,6 +15,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "subtrack-server"
+rootProject.name = "plover-server"
 
 include(":sync", ":server")

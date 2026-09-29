@@ -148,11 +148,11 @@ class OkHttpSyncApi(
             val request = Request.Builder().url(root.resolve("v1/info")!!).get().build()
             val info = try {
                 client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) throw SyncException.Server(response.code, "Not a Subtrack server")
+                    if (!response.isSuccessful) throw SyncException.Server(response.code, "Not a Plover server")
                     try {
                         Protocol.json.decodeFromString(ServerInfo.serializer(), response.body.string())
                     } catch (e: SerializationException) {
-                        throw SyncException.Server(response.code, "Not a Subtrack server")
+                        throw SyncException.Server(response.code, "Not a Plover server")
                     }
                 }
             } catch (e: IOException) {

@@ -1,20 +1,20 @@
-# Subtrack sync server, for any Docker host: a NAS (OpenMediaVault, Synology, Unraid, TrueNAS)
+# Plover sync server, for any Docker host: a NAS (OpenMediaVault, Synology, Unraid, TrueNAS)
 # or a computer that stays on at home. Guides are in docs/.
 services:
-  subtrack:
-    image: ghcr.io/plainly-studio/subtrack-sync-server:latest
-    container_name: subtrack
+  plover:
+    image: ghcr.io/plainly-studio/plover-server:latest
+    container_name: plover
     restart: unless-stopped
     # The user the container runs as, so files in the data folder belong to you. Find yours with `id`.
     user: "${PUID:-1000}:${PGID:-100}"
     ports:
       - "8443:8443"
     volumes:
-      # Change the left side to a folder on your data drive, e.g. /srv/appdata/subtrack
-      - CHANGE_TO_YOUR_DATA_FOLDER/subtrack:/data
+      # Change the left side to a folder on your data drive, e.g. /srv/appdata/plover
+      - CHANGE_TO_YOUR_DATA_FOLDER/plover:/data
     environment:
       TZ: "${TZ:-Etc/UTC}"
       # Optional: extra names for the certificate, e.g. "nas.local"
-      # SUBTRACK_HOSTNAMES: ""
+      # PLOVER_HOSTNAMES: ""
       # Once all your devices are paired, set this to "false" and redeploy to refuse new devices.
-      # SUBTRACK_PAIRING_ENABLED: "true"
+      # PLOVER_PAIRING_ENABLED: "true"

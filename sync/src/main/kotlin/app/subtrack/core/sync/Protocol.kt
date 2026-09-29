@@ -30,7 +30,7 @@ object Protocol {
 }
 
 @Serializable
-data class ServerInfo(val name: String = "subtrack-server", val version: String, val protocol: Int, val vaultExists: Boolean)
+data class ServerInfo(val name: String = "plover-server", val version: String, val protocol: Int, val vaultExists: Boolean)
 
 @Serializable
 data class RegisterRequest(val pairingCode: String, val deviceName: String)
